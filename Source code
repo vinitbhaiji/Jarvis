@@ -1,0 +1,121 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# In[9]:
+
+
+import pyttsx3
+import datetime
+import speech_recognition as sr
+import wikipedia
+import requests
+import json
+import webbrowser
+import os
+import pywhatkit as kit
+
+
+# In[10]:
+
+
+engine = pyttsx3.init('sapi5')
+
+
+# In[12]:
+
+
+voices = engine.getProperty('voices')
+#print('voices')
+engine.setProperty('voice',voices[0].id)
+print(voices[0].id)
+
+author = 'Jarvis'
+def speak(audio):
+    engine.say(audio)
+    engine.runAndWait()
+
+def wishme():
+    hour = int(datetime.datetime.now().hour)
+    if hour >= 0 and hour < 12:
+        speak(f"Good Morning {author}")
+    elif hour >= 12 and hour < 18:
+        speak(f"Good Afternoon {author}")
+    else:
+        speak(f"Good Evening {author}")
+
+    speak(f'Hello {author}, I am jarvis please tell me how can i assist you?')
+
+          
+#Take input as voice and return in string         
+def takecommand():
+    r = sr.Recognizer()
+    with sr.Microphone() as source:
+        print('listening..')
+        r.pause_threshold = 1.5
+        audio = r.listen(source)
+    try:
+        print('recognizing...')
+        query = r.recognize_google(audio, language ='en-in')       
+        print(f'{author}: {query}\n')
+    except Exception as e:
+        print(f'Sorry,{author} say that again!')
+        return 'none'
+    return query
+          
+          
+if __name__ == '__main__':
+    #speak(f'Welcome {author}, I am Jarvis')
+    wishme()
+    #takecommand()
+    if 1:
+        query = takecommand().lower()
+        if 'wikipedia' and 'who' in query:
+            speak('Searching wikpedia..')
+            query = query.replace('wikipedia','')
+            results = wikipedia.summary(query, sentences = 2)
+            print(results)
+            speak('According to wikipedia:')
+            speak(results)
+        
+        elif 'news' in query:
+            speak('News headlines')
+            query = query.replace('news','')
+            url = "https://newsapi.org/v2/top-headlines?country=in&apiKey=29b6d402e2984bacad3370be922e436a"
+            news = requests.get(url).text
+            news = json.loads(news)
+            art = news['articles']
+            ncount = 0 
+            for article in art:
+                print(article['title'])
+                speak(article['title'])
+                
+                print(article['description'])
+                speak(article['description'])
+                ncount=ncount+1
+                if ncount == 2:
+                    break
+                speak('towards the next news')
+        
+        elif 'open google' in query:
+            webbrowser.open('www.google.com')
+        
+        elif 'open youtube' in query:
+            webbrowser.open('www.youtube.com')
+            
+        elif 'search browser' in query:
+            speak("What should i search?")
+            um = takecommand().lower()
+            webbrowser.open(f"{um}")
+        
+        elif 'ip address' in query:
+            ip = requests.get('http://api.ipify.org').text
+            print(f'Your ip address is {ip}')
+            speak(f'Your ip address is {ip}')
+        
+        elif "open command prompt" in query:
+            os.system("start cmd")
+                
+        elif "play on youtube" in query:
+            speak("What should i play?")
+            cm = takecommand().lower()
+            kit.playonyt(f"{cm}")
